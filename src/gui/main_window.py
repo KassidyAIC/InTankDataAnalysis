@@ -1,12 +1,12 @@
 # src/gui/main_window.py
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-from src.core.analyzer import load_log_file, process_dataframe
+from src.core.analysis import load_log_file, process_dataframe
 
-class IntankDataAnalyzerApp:
+class IntankDataAnalysisApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("InTank Data Analyzer")
+        self.root.title("InTank Data Analysis")
         self.df = None
 
         # Button to select file
