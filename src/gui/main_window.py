@@ -33,8 +33,7 @@ class IntankDataAnalysisApp:
             return
 
         try:
-            self.df = load_log_file(file_path)         # returns DataFrame
-            self.df = process_dataframe(self.df)       # process
+            self.df = process_dataframe(file_path)       # process
 
             self.show_table()
             self.save_btn.config(state='normal')

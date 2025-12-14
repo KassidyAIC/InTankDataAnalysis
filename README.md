@@ -31,6 +31,7 @@ python -m pip install --upgrade pip
 Do the following anytime the requirmenets change
 
 ```bash
+.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -40,12 +41,21 @@ pip install -r requirements.txt
 To run the Hello World program:
 
 ```bash
-python hello_world.py
+.venv\Scripts\activate
+python main.py
 ```
 
 Expected output:
 ```
 Hello, World!
+```
+
+### Installing the program
+
+```bash
+.venv\Scripts\activate
+pip install pyinstaller
+pyinstaller --onefile --windowed main.py
 ```
 
 ## Development
