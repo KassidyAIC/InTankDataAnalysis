@@ -1,0 +1,2 @@
+pandas
+openpyxl  # if you want Excel support
