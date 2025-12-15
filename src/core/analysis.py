@@ -1,23 +1,39 @@
+from src.config.app_config import AppConfig
+from src.config.sequence_config import load_tank_seq_map
 import pandas as pd
+import re
 
-def process_dataframe(file_path):
-    # """Example processing: add a 'Processed' column."""
-    # df['Processed'] = True
-    # return df
+def process_dataframe(file_path, app_config: AppConfig) -> pd.DataFrame:
     df = load_log_file(file_path)
-    df_pivot = df.pivot_table(
-        index='TimeString',          # row index
-        columns='VarName',           # each variable becomes a column
-        values='VarValue',           # fill with VarValue
-        aggfunc='first'              # if multiple entries per timestamp
-    )
 
-    # Optional: reset index so TimeString becomes a normal column
-    df_pivot = df_pivot.reset_index()
+    # Only select the rows corresponding to sequence steps
+    mask = df['VarName'].str.contains(r'DB_CTRL\.Tanks\[\d+\]\.Seq\.Step')
+    seq_df = df[mask].copy()
 
-    # Save to CSV
-    df_pivot.to_csv("transformed_log.csv", index=False)
-    return df_pivot 
+    # Extract tank number
+    seq_df['Tank'] = seq_df['VarName'].apply(lambda x: int(re.search(r'\[(\d+)\]', x).group(1)))
+
+    # Use VarValue as SeqStep
+    seq_df['SeqStep'] = seq_df['VarValue']
+    seq_df["SeqStep"] = pd.to_numeric(seq_df["SeqStep"], errors="coerce")
+    tank_seq_step_map = load_tank_seq_map()
+    seq_df["SeqStepName"] = seq_df["SeqStep"].map(tank_seq_step_map).fillna("Unknown")
+    seq_df = seq_df[seq_df["SeqStepName"] != "Unknown"] # remove logs for sequence unknown sequence numbers
+
+    seq_df["TankName"] = seq_df["Tank"].map(app_config.tank_name_map()).fillna("")
+    seq_df["BallastGroup"] = seq_df["Tank"].map(app_config.ballast_group_map()).fillna(0)
+    seq_df = seq_df[seq_df["TankName"] != ""] # remove logs for tanks that do not exist
+    
+    out = seq_df[['TimeString', 'BallastGroup', 'Tank', 'TankName', 'SeqStep', 'SeqStepName']].copy()
+    out = out.rename(columns={
+        "Tank": "Tank Number",
+        "TankName": "Tank Name",
+        "SeqStep": "Tank Sequence Step Number",
+        "SeqStepName": "Tank Sequence Step Name",
+    })
+
+    out.to_csv("transformed_seq_log.csv", index=False)
+    return out
 
 def load_log_file(file_path):
     """Load CSV or Excel and return a DataFrame, skipping malformed lines."""
